@@ -21,19 +21,44 @@ class Adafruit_GFX : public Print {
   // TRANSACTION API / CORE DRAW API
   // These MAY be overridden by the subclass to provide device-specific
   // optimized code.  Otherwise 'generic' versions are used.
+  #if defined(__AVR__)
+  void startWrite(void) {}
+  #else
   virtual void startWrite(void);
+  #endif
   void writePixel(int16_t x, int16_t y, uint16_t color);
   void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
   void writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
   virtual void writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
   virtual void writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
+  #if defined(__AVR__)
+  void endWrite(void) {}
+  #else
   virtual void endWrite(void);
+  #endif
 
   // CONTROL API
   // These MAY be overridden by the subclass to provide device-specific
   // optimized code.  Otherwise 'generic' versions are used.
+  #if defined(__AVR__)
+  void setRotation(uint8_t r) {
+    rotation = (r & 3);
+    if (rotation & 1) {
+      _width = HEIGHT;
+      _height = WIDTH;
+    } else {
+      _width = WIDTH;
+      _height = HEIGHT;
+    }
+  }
+  #else
   virtual void setRotation(uint8_t r);
+  #endif
+  #if defined(__AVR__)
+  void invertDisplay(boolean) {}
+  #else
   virtual void invertDisplay(boolean i);
+  #endif
   void draw_textbox(char *text, char *text2);
   void draw_textbox(const char *text1, const char *text2);
   // BASIC DRAW API

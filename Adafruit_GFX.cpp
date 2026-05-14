@@ -128,9 +128,11 @@ void Adafruit_GFX::writeLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
   }
 }
 
+#if !defined(__AVR__)
 void Adafruit_GFX::startWrite() {
   // Overwrite in subclasses if desired!
 }
+#endif
 
 void Adafruit_GFX::writePixel(int16_t x, int16_t y, uint16_t color) {
   // Overwrite in subclasses if startWrite is defined!
@@ -163,9 +165,11 @@ void Adafruit_GFX::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h,
   fillRect(x, y, w, h, color);
 }
 
+#if !defined(__AVR__)
 void Adafruit_GFX::endWrite() {
   // Overwrite in subclasses if startWrite is defined!
 }
+#endif
 
 // (x,y) is topmost point; if unsure, calling function
 // should sort endpoints or call drawLine() instead
@@ -555,16 +559,17 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
 void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
                               int16_t h, uint16_t color, bool flip_vert, bool flip_horiz) {
 
-  int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
+  uint8_t byteWidth = (uint8_t)((w + 7) / 8); // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
+  uint8_t *row = bitmap;
 
   startWrite();
-  for (int16_t j = 0; j < h; j++) {
-    for (int16_t i = 0; i < w; i++) {
+  for (uint8_t j = 0; j < (uint8_t)h; j++) {
+    for (uint8_t i = 0; i < (uint8_t)w; i++) {
       if (i & 7)
         byte <<= 1;
       else
-        byte = bitmap[j * byteWidth + i / 8];
+        byte = row[i / 8];
       uint8_t x_r, y_r;
       if (flip_vert) {
         x_r = x + w - i - 1;
@@ -586,6 +591,7 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
       if (byte & 0x80)
         writePixel(x_r, y_r, color);
     }
+    row += byteWidth;
   }
 }
 
@@ -961,6 +967,7 @@ void Adafruit_GFX::setTextWrap(boolean w) { wrap = w; }
 
 uint8_t Adafruit_GFX::getRotation(void) const { return rotation; }
 
+#if !defined(__AVR__)
 void Adafruit_GFX::setRotation(uint8_t x) {
   rotation = (x & 3);
   switch (rotation) {
@@ -976,6 +983,7 @@ void Adafruit_GFX::setRotation(uint8_t x) {
     break;
   }
 }
+#endif
 
 void Adafruit_GFX::draw_textbox(const char *text1, const char *text2) {
   char str1[16];
@@ -1148,9 +1156,11 @@ int16_t Adafruit_GFX::width(void) const { return _width; }
 
 int16_t Adafruit_GFX::height(void) const { return _height; }
 
+#if !defined(__AVR__)
 void Adafruit_GFX::invertDisplay(boolean i) {
   // Do nothing, must be subclassed if supported by hardware
 }
+#endif
 
 /***************************************************************************/
 // code for the GFX button UI element
