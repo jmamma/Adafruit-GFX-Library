@@ -183,19 +183,15 @@ void Adafruit_GFX::drawFastVLine(uint8_t x, uint8_t y, uint8_t h,
 void Adafruit_GFX::drawFastHLine(int16_t x, int16_t y, int16_t w,
                                  uint16_t color) {
   // Update in subclasses if desired!
-  startWrite();
   writeLine(x, y, x + w - 1, y, color);
-  endWrite();
 }
 
 void Adafruit_GFX::fillRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h,
                             uint8_t color) {
   // Update in subclasses if desired!
-  startWrite();
   for (int16_t i = x; i < x + w; i++) {
     writeFastVLine(i, y, h, color);
   }
-  endWrite();
 }
 
 void Adafruit_GFX::fillScreen(uint16_t color) {
@@ -215,9 +211,7 @@ void Adafruit_GFX::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
       _swap_int16_t(x0, x1);
     drawFastHLine(x0, y0, x1 - x0 + 1, color);
   } else {
-    startWrite();
     writeLine(x0, y0, x1, y1, color);
-    endWrite();
   }
 }
 
@@ -337,12 +331,10 @@ void Adafruit_GFX::fillCircleHelper(int16_t x0, int16_t y0, int16_t r,
 // Draw a rectangle
 void Adafruit_GFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h,
                             uint16_t color) {
-  startWrite();
   writeFastHLine(x, y, w, color);
   writeFastHLine(x, y + h - 1, w, color);
   writeFastVLine(x, y, h, color);
   writeFastVLine(x + w - 1, y, h, color);
-  endWrite();
 }
 
 // Draw a rounded rectangle
@@ -485,7 +477,6 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
   int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
-  startWrite();
   for (int16_t j = 0; j < h; j++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -596,7 +587,6 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
         writePixel(x_r, y_r, color);
     }
   }
-  endWrite();
 }
 
 // Draw a RAM-resident 1-bit image at the specified (x,y) position,
@@ -608,7 +598,6 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
   int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
-  startWrite();
   for (int16_t j = 0; j < h; j++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -635,7 +624,6 @@ void Adafruit_GFX::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w,
       writePixel(x_r, y_r, (byte & 0x80) ? color : bg);
     }
   }
-  endWrite();
 }
 
 // Draw PROGMEM-resident XBitMap Files (*.xbm), exported from GIMP,
@@ -821,13 +809,14 @@ void Adafruit_GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap,
 // Draw a character
 void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
                             uint16_t color, uint16_t bg, uint8_t size) {
+  (void)size;
 
   if (!gfxFont) { // 'Classic' built-in font
 
-    if ((x >= _width) ||            // Clip right
-        (y >= _height) ||           // Clip bottom
-        ((x + 6 * size - 1) < 0) || // Clip left
-        ((y + 8 * size - 1) < 0))   // Clip top
+    if ((x >= _width) ||  // Clip right
+        (y >= _height) || // Clip bottom
+        ((x + 5) < 0) ||  // Clip left
+        ((y + 7) < 0))    // Clip top
       return;
 
 
@@ -836,7 +825,6 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
     //if (!_cp437 && (c >= 176))
     //  c++; // Handle 'classic' charset behavior
 
-    startWrite();
     for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
       uint8_t line = pgm_read_byte(&font[c * 5 + i]);
       for (int8_t j = 0; j < 8; j++, line >>= 1) {
@@ -850,7 +838,6 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
     if (bg != color) { // If opaque, draw vertical line for last column
         writeFastVLine(x + 5, y, 8, bg);
     }
-    endWrite();
 
   } else { // Custom font
 
@@ -867,12 +854,6 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
     int8_t xo = pgm_read_byte(&glyph->xOffset),
            yo = pgm_read_byte(&glyph->yOffset);
     uint8_t xx, yy, bits = 0, bit = 0;
-    int16_t xo16 = 0, yo16 = 0;
-
-    if (size > 1) {
-      xo16 = xo;
-      yo16 = yo;
-    }
 
     // Todo: Add character clipping here
 
@@ -892,7 +873,6 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
     // displays supporting setAddrWindow() and pushColors()), but haven't
     // implemented this yet.
 
-    startWrite();
     for (yy = 0; yy < h; yy++) {
       for (xx = 0; xx < w; xx++) {
         if (!(bit++ & 7)) {
@@ -904,7 +884,6 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
         bits <<= 1;
       }
     }
-    endWrite();
 
   } // End classic vs custom font
 }
@@ -918,14 +897,10 @@ void Adafruit_GFX::write(uint8_t c) {
 
     if (c == '\n') {            // Newline?
       cursor_x = 0;             // Reset x to zero,
-      cursor_y += textsize * 8; // advance y one line
+      cursor_y += 8;            // advance y one line
     } else if (c != '\r') {     // Ignore carriage returns
-      if (wrap && ((cursor_x + textsize * 6) > _width)) { // Off right?
-        cursor_x = 0;                                     // Reset x to zero,
-        cursor_y += textsize * 8;                         // advance y one line
-      }
-      drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
-      cursor_x += textsize * 6; // Advance x one char
+      drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, 1);
+      cursor_x += 6;            // Advance x one char
     }
 
   } else { // Custom font
@@ -1006,7 +981,7 @@ void Adafruit_GFX::draw_textbox(const char *text1, const char *text2) {
   char str1[16];
   char str2[16];
   strcpy_P(str1, text1);
-  strcpy_P(str1, text2);
+  strcpy_P(str2, text2);
   draw_textbox(str1, str2);
 }
 
@@ -1016,7 +991,7 @@ void Adafruit_GFX::draw_textbox(char *text, char *text2) {
   uint8_t font_width = 6;
   uint8_t len1 = strlen(text);
   uint8_t len2 = strlen(text2);
-  uint8_t len_total = (strlen(text) + strlen(text2) + 2);
+  uint8_t len_total = len1 + len2 + 2;
   bool use_space = (len2 > 0);
   if (use_space) { len_total++; }
   uint8_t w = (len_total * font_width);
