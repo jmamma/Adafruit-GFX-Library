@@ -818,7 +818,9 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 
 
     c -= 0x20; //Classic font is reduced in lengthand shifted.
-    if (c > 126) { c = 0; }
+    // The table holds 0x20..0x7E. Anything else draws as a space; the limit
+    // was 126, so 0x7F..0x9E read past the end of the table.
+    if (c >= sizeof(font) / 5) { c = 0; }
     //if (!_cp437 && (c >= 176))
     //  c++; // Handle 'classic' charset behavior
 
